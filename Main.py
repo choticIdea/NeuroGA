@@ -12,7 +12,7 @@ def getIncrement(k):
     i = 0;
     inc = 0;
     while i < len(k) -1:
-        inc += k[i] + k[i+1];
+        inc += k[i+1] - k[i];
         i+=1;
     return inc;
 def createZeros(size):
@@ -25,6 +25,7 @@ def prepareWeight(h,o,kromosom):
     w = []
     for i in range(offset,offset+h):
         w.append(kromosom[i]);
+
     return w
 def getData(first,last):
     dat =[];
@@ -36,10 +37,12 @@ def decodeKromosom(k):
     start = len(k)-1;
     w = 0;
     for i in range(start,-1,-1):
-        w += math.pow(2, (i % bitsPerElement)) * i;
+        w += math.pow(2, (i % bitsPerElement)) * k[i];
         if(i % bitsPerElement == 0 and i < start):
+
             w = (w / maxBitsVal) * (maxWeight - minWeight);
             w = w - maxWeight;
+
             weights.append(w);
             w = 0;
 
@@ -111,7 +114,7 @@ while epoch < maxEpoch:
     while len(clone) != 0:
         crossover(pops,clone.pop(),clone.pop());
     #examining pops
-    msePop = createZeros(len(pops));
+    msePop = [];
 
     for p in pops:
         last = timeWindow-1;
@@ -123,14 +126,16 @@ while epoch < maxEpoch:
             if(last >= len(data)-1):
                 last = len(data)-1
             inValue = createZeros(hiddenLayer);
+            t = decodeKromosom(p);
+
             for i in range(len(row)):
-                t = decodeKromosom(p);
+
 
                 w = prepareWeight(hiddenLayer,i,t);
 
                 for j in range(len(row)):
                     inValue[j] += w[j]* row[j];
-            print(inValue);
+
             sum = 0;
             temp = copy.copy(inValue);
             temp.sort();
@@ -138,9 +143,11 @@ while epoch < maxEpoch:
             max = temp.pop();
             for i in range(len(inValue)):
                 inValue[i] = (inValue[i] - min)/abs((max-min));
+
                 sum+= inValue[i];
             mean = sum/hiddenLayer;
             avg = mean * getIncrement(row)+row[len(row)-1];# k is the whole input, or every avg coloumn in a time window;
+
             e = 0;
             if(last+1 <= len(data) -1):
                 e = abs(data[last+1][10] - avg);
@@ -150,8 +157,11 @@ while epoch < maxEpoch:
             # print(temp);
             # print(max);
             # print(min);
-        mse = sumSE/(len(data) - timeWindow);
+
+        mse = sumSE/(len(data));
+        sumSE = 0;
         msePop.append(mse);
+
     #select parents, generate new pop, replace old one
     idx = 0;
     for i in range(len(pops)):
@@ -169,6 +179,9 @@ while epoch < maxEpoch:
 
         idx = -1;
         bestMSE = -1;
+    print(msePop);
     #cull weak individuals
     pops = pops[:startingPops];
+    msePop = msePop[:startingPops];
+    print(msePop);
     epoch+= 1;
