@@ -11,7 +11,7 @@ def generateKromosom():
 def getIncrement(k):
     i = 0;
     inc = 0;
-    while i < len(k):
+    while i < len(k) -1:
         inc += k[i] + k[i+1];
         i+=1;
     return inc;
@@ -20,10 +20,10 @@ def createZeros(size):
     for i in range(size):
         mat.append(0);
     return mat;
-def prepareWeight(maxHiddenLayer,o,kromosom):
-    offset = o * maxHiddenLayer;
+def prepareWeight(h,o,kromosom):
+    offset = o * h;
     w = []
-    for i in range(offset,offset+maxHiddenLayer-1):
+    for i in range(offset,offset+h):
         w.append(kromosom[i]);
     return w
 def getData(first,last):
@@ -35,14 +35,13 @@ def decodeKromosom(k):
     weights = [];
     start = len(k)-1;
     w = 0;
-    for i in range(start,0,-1):
+    for i in range(start,-1,-1):
+        w += math.pow(2, (i % bitsPerElement)) * i;
         if(i % bitsPerElement == 0 and i < start):
             w = (w / maxBitsVal) * (maxWeight - minWeight);
             w = w - maxWeight;
             weights.append(w);
             w = 0;
-        else :
-            w += math.pow(2,(i%bitsPerElement))*i;
 
     return weights;
 def crossover(pops,a,b):
@@ -59,12 +58,14 @@ def crossover(pops,a,b):
         else :
             x[i] = b[i];
             y[i] = a[i];
-    pops.append(a);
-    pops.append(b);
+    pops.append(x);
+    pops.append(y);
     mut = random.randint(0,100);
     if(mut > mutationChance):
-        pops.append(mutate(a));
-        pops.append(mutate(b));
+        ma = mutate(x);
+        mb = mutate(y);
+        pops.append(ma);
+        pops.append(mb);
 def mutate(k):
     rng = random.randint(1,100);
     for i in range(len(k)):
@@ -73,7 +74,8 @@ def mutate(k):
                k[i] = 1;
         else :
                 k[i]=0;
-input = 6;
+    return k;
+
 minWeight = -1;
 maxWeight = 1;
 inputBits = 3;
@@ -81,11 +83,11 @@ maxHiddenLayer = 16;
 hiddenLayer = 3;
 timeWindow = 3;
 maxTimeWindow = 10;
-numWeights = (input*hiddenLayer)+hiddenLayer;
+numWeights = (timeWindow*hiddenLayer)+hiddenLayer;
 bitsPerElement = 10;
 maxBitsVal  = math.pow(2,bitsPerElement);
 epoch = 0;
-maxEpoch = 300;
+maxEpoch = 4;
 mutationChance = 40;
 book = xlrd.open_workbook("DataHistorisANTAM.xlsx");
 sheet = book.sheet_by_index(0);
@@ -102,39 +104,52 @@ sumSE = 0;
 bestMSE = -1;
 for i in range(startingPops):
     pops.append(generateKromosom());
+
+
 while epoch < maxEpoch:
     clone = copy.copy(pops);
     while len(clone) != 0:
         crossover(pops,clone.pop(),clone.pop());
     #examining pops
     msePop = createZeros(len(pops));
+
     for p in pops:
-        last = 0;
+        last = timeWindow-1;
         first = 0;
-        while (last < len(data)):
-            last = timeWindow - 1;
+        while (last < len(data)-1):
             row = getData(first,last);
-            first = last+1;
+            first += 1;
+            last+=1
+            if(last >= len(data)-1):
+                last = len(data)-1
             inValue = createZeros(hiddenLayer);
             for i in range(len(row)):
                 t = decodeKromosom(p);
-                print(len(t));
-                w = prepareWeight(maxHiddenLayer,i,t);
-                for i in range(len(inValue)):
-                    inValue[i] += w[i]* row[i];
 
+                w = prepareWeight(hiddenLayer,i,t);
+
+                for j in range(len(row)):
+                    inValue[j] += w[j]* row[j];
+            print(inValue);
             sum = 0;
             temp = copy.copy(inValue);
             temp.sort();
             min = temp[0];
             max = temp.pop();
             for i in range(len(inValue)):
-                inValue[i] = (inValue[i] - min)/(max-min);
+                inValue[i] = (inValue[i] - min)/abs((max-min));
                 sum+= inValue[i];
             mean = sum/hiddenLayer;
-            avg = mean * getIncrement(row)+row[last];# k is the whole input, or every avg coloumn in a time window;
-            e = abs(data[last+1] - avg);
+            avg = mean * getIncrement(row)+row[len(row)-1];# k is the whole input, or every avg coloumn in a time window;
+            e = 0;
+            if(last+1 <= len(data) -1):
+                e = abs(data[last+1][10] - avg);
+            else:
+                e = 0;
             sumSE += e*e;
+            # print(temp);
+            # print(max);
+            # print(min);
         mse = sumSE/(len(data) - timeWindow);
         msePop.append(mse);
     #select parents, generate new pop, replace old one
