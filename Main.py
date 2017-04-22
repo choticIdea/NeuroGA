@@ -90,7 +90,7 @@ numWeights = (timeWindow*hiddenLayer)+hiddenLayer;
 bitsPerElement = 10;
 maxBitsVal  = math.pow(2,bitsPerElement);
 epoch = 0;
-maxEpoch = 4;
+maxEpoch = 150;
 mutationChance = 40;
 book = xlrd.open_workbook("DataHistorisANTAM.xlsx");
 sheet = book.sheet_by_index(0);
@@ -127,26 +127,50 @@ while epoch < maxEpoch:
                 last = len(data)-1
             inValue = createZeros(hiddenLayer);
             t = decodeKromosom(p);
+            hidden_neuron = [t[0:3], t[3:6], t[6:9]]
+            output_neuron = t[-3:]
+            a = [0 for i in range(len(hidden_neuron))]
+            output = 0
+            for i in range(len(hidden_neuron)):
+                tmp = [0 for z in range(len(hidden_neuron[i]))]
+                tmpSum = [0 for z in range(len(hidden_neuron[i]))]
+                for j in range(len(hidden_neuron[i])):
+                    tmp[j] = hidden_neuron[i][j] * row[j]
+                for j in range(len(hidden_neuron[i])):
+                    tmpSum[j] = (tmp[j] - min(tmp)) / abs((max(tmp) - min(tmp)))
+                a[i] = sum(tmpSum)
+                a[i] /=  float(j+1)
+            # print a
+            for i in range(len(output_neuron)):
+                output += output_neuron[i] * a[i]
+            output /= float(i+1)
+            current_input_avg = (abs(row[0] - row[1]) + abs(row[1] - row[2])) / float(2)
+            avg = output * current_input_avg + row[-1];
 
-            for i in range(len(row)):
+            # for i in range(len(row)):
 
 
-                w = prepareWeight(hiddenLayer,i,t);
+            #     w = prepareWeight(hiddenLayer,i,t);
 
-                for j in range(len(row)):
-                    inValue[j] += w[j]* row[j];
+            #     for j in range(len(row)):
+            #         inValue[j] += w[j]* row[j];
 
-            sum = 0;
-            temp = copy.copy(inValue);
-            temp.sort();
-            min = temp[0];
-            max = temp.pop();
-            for i in range(len(inValue)):
-                inValue[i] = (inValue[i] - min)/abs((max-min));
+            # sum = 0;
+            # temp = copy.copy(inValue);
+            # temp.sort();
+            # min = temp[0];
+            # max = temp.pop();
+            # for i in range(len(inValue)):
+            #     inValue[i] = (inValue[i] - min)/abs((max-min));
 
-                sum+= inValue[i];
-            mean = sum/hiddenLayer;
-            avg = mean * getIncrement(row)+row[len(row)-1];# k is the whole input, or every avg coloumn in a time window;
+            #     sum+= inValue[i];
+
+            # output_sum = 0
+            # for nz in range(len(output_neuron)):
+            #     output_sum += output_neuron[nz] * inValue[nz]
+            # # mean = sum/hiddenLayer;
+            # mean = output_sum / (nz+1)
+            # avg = mean * getIncrement(row)+row[len(row)-1];# k is the whole input, or every avg coloumn in a time window;
 
             e = 0;
             if(last+1 <= len(data) -1):
@@ -185,3 +209,4 @@ while epoch < maxEpoch:
     msePop = msePop[:startingPops];
     print(msePop);
     epoch+= 1;
+print pops[0]

@@ -20,9 +20,9 @@ def decodeKromosom(k):
             w = 0;
     return weights;
 
-all_weights = decodeKromosom([1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1])
+all_weights = decodeKromosom([1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0])
 
-initial_avg = [697, 714, 714]
+initial_avg = [714, 697, 714]
 
 hidden_weights = [all_weights[0:3], all_weights[3:6], all_weights[6:9]]
 output_weights = all_weights[9:12]
@@ -43,11 +43,11 @@ for x in range(7):
             tmpSum[j] = (tmp[j] - min(tmp)) / abs((max(tmp) - min(tmp)))
         a[i] = sum(tmpSum)
         a[i] /=  float(j+1)
-    print a
+    # print a
     for i in range(len(output_weights)):
         output += output_weights[i] * a[i]
     output /= float(i+1)
     current_input_avg = (abs(current_input[0] - current_input[1]) + abs(current_input[1] - current_input[2])) / float(2)
-    initial_avg.append((output * current_input_avg) + current_input[-1])
+    initial_avg.append(int((output * current_input_avg) + current_input[-1]))
 
 print initial_avg
